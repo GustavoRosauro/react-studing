@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { CourseModel } from './interfaces/courseModel';
 import { listCourses } from '../memory_base/courses_memory';
 import { Button, Container, Paper, Stack, styled, Table, TableBody, TableCell, tableCellClasses, TableContainer, TableHead, TableRow, TextField } from '@mui/material';
+import DeleteConfirmationDialog from './deleteConfirmationDialog';
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
@@ -17,10 +18,33 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 const Form: React.FC = () => {
     const [course, setCourse] = useState<CourseModel>({ name: '' })
     const [courses, setCourses] = useState<CourseModel[]>([])
+    const [rowToDelete, setRowToDelete] = useState<string | null>(null)
+    const [open, setOpen] = useState(false);
 
     useEffect(() => {
         setCourses(listCourses)
     }, [])
+
+    const handleClickOpen = (nome: string) =>{
+        setRowToDelete(nome);
+        setOpen(true);
+    }
+
+    const handleClose = () =>{
+        setOpen(false);
+    }
+    
+    const handleDelete = () =>{
+        let coursesFilter = courses.filter(row => row.name !== rowToDelete);
+        setCourses(coursesFilter)
+        setOpen(false);
+        setRemoveCourse(coursesFilter);
+    }
+    
+    const setRemoveCourse = (coursesFilter: Array<CourseModel>) => {
+        listCourses.splice(0, listCourses.length);
+        coursesFilter.forEach(course => listCourses.push(course))
+    }
 
     const handleInputEvent = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -59,19 +83,27 @@ const Form: React.FC = () => {
                     <Table sx={{ minWidth: 650 }} size="small">
                         <TableHead>
                             <TableRow>
-                                <StyledTableCell>Course</StyledTableCell>
+                                <StyledTableCell colSpan={2}>Course</StyledTableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {courses.map(c =>
-                                <TableRow>
+                            <TableRow>
                                     <TableCell>{c.name}</TableCell >
-                                </TableRow>
+                            <TableCell>
+                                <Button color='error' onClick={() => handleClickOpen(c.name)}>remove</Button>
+                                </TableCell>
+                            </TableRow>
                             )}
                         </TableBody>
                     </Table>
                 </TableContainer>
             </Container>
+            <DeleteConfirmationDialog
+                open={open}
+                onClose={handleClose}
+                onConfirm={handleDelete}
+                />
         </Container>
     );
 }
